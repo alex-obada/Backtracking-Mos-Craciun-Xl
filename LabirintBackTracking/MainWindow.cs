@@ -25,11 +25,12 @@ namespace LabirintBackTracking
         
         private TableLayoutPanel tablePanel;
         private Label[,] table;
+        private const string blockedTile = "██";
         
 
         public MainWindow()
         {
-            DoubleBuffered = true;
+            //DoubleBuffered = true;
             InitializeComponent();
             ReadData();
             InitializeGUI();
@@ -63,15 +64,49 @@ namespace LabirintBackTracking
                         BackColor = obstacles[i, j] ? Color.Red : Color.White,
                         TextAlign = ContentAlignment.MiddleCenter,
                         Dock = DockStyle.Fill,
-                        Text = obstacles[i, j] ? "██" : "",
+                        Text = obstacles[i, j] ? blockedTile : "",
                         Font = new Font("Arial", 24),
                         BorderStyle = BorderStyle.FixedSingle,
                         Margin = new Padding(2, 2, 2, 2),
                     };
+                    table[i, j].Click += HandleTileClicked;
                     tablePanel.Controls.Add(table[i, j], j, i);
                 }
             }
             panel.Controls.Add(tablePanel);
+        }
+
+        private void HandleTileClicked(object sender, EventArgs e)
+        {
+            if (lockBacktracking)
+                return;
+
+            Label label = (Label)sender;
+
+            int i, j;
+            FindCoordinates(label, out i, out j);
+
+            if (obstacles[i, j])
+            {
+                label.BackColor = Color.White;
+                label.Text = "";
+            }
+            else
+            {
+                label.BackColor = Color.Red;
+                label.Text = blockedTile;
+            }
+
+            obstacles[i, j] = !obstacles[i, j];
+        }
+
+        private void FindCoordinates(Label label, out int i, out int j)
+        {
+            j = 0;
+            for (i = 0; i < n; ++i)
+                for (j = 0; j < n; ++j)
+                    if (label == table[i, j])
+                        return;
         }
 
         private void ReadData() 
