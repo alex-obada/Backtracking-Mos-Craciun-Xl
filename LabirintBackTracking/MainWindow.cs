@@ -21,16 +21,21 @@ namespace LabirintBackTracking
         private int n;
         private bool[,] obstacles;
         private int[,] labirint;
-        private readonly List<KeyValuePair<int, int>> path = new List<KeyValuePair<int, int>>();
+        private List<KeyValuePair<int, int>> path = new List<KeyValuePair<int, int>>();
         
         private TableLayoutPanel tablePanel;
         private Label[,] table;
         private const string blockedTile = "██";
-        
+        private const string openTile = "";
+
+        Thread backtrackingThread = null;
+        private bool lockBacktracking = false;
+
+
 
         public MainWindow()
         {
-            //DoubleBuffered = true;
+            DoubleBuffered = true;
             InitializeComponent();
             ReadData();
             InitializeGUI();
@@ -64,7 +69,7 @@ namespace LabirintBackTracking
                         BackColor = obstacles[i, j] ? Color.Red : Color.White,
                         TextAlign = ContentAlignment.MiddleCenter,
                         Dock = DockStyle.Fill,
-                        Text = obstacles[i, j] ? blockedTile : "",
+                        Text = obstacles[i, j] ? blockedTile : openTile,
                         Font = new Font("Arial", 24),
                         BorderStyle = BorderStyle.FixedSingle,
                         Margin = new Padding(2, 2, 2, 2),
@@ -83,13 +88,12 @@ namespace LabirintBackTracking
 
             Label label = (Label)sender;
 
-            int i, j;
-            FindCoordinates(label, out i, out j);
+            FindCoordinates(label, out int i, out int j);
 
             if (obstacles[i, j])
             {
                 label.BackColor = Color.White;
-                label.Text = "";
+                label.Text = openTile;
             }
             else
             {
@@ -155,7 +159,6 @@ namespace LabirintBackTracking
             }
         }
 
-        private bool lockBacktracking = false;
         private void btnStart_Click(object sender, EventArgs e)
         {
             if (lockBacktracking)
@@ -163,14 +166,15 @@ namespace LabirintBackTracking
             
             lockBacktracking = true;
 
-            BackTracking(0, 0, 1);
+            backtrackingThread = new Thread(() => BackTracking());
+            backtrackingThread.Start();
 
             lockBacktracking = false;
         }
 
-        private void BackTracking(int i, int j, int step)
+        private void BackTracking(int i = 0, int j = 0, int step = 1)
         {
-            if (!IsValid(i, j)) 
+            if (!IsValidTile(i, j)) 
                 return;
 
             labirint[i, j] = step;
@@ -197,9 +201,7 @@ namespace LabirintBackTracking
             {
                 i = pair.Key;
                 j = pair.Value;
-
-                table[i, j].BackColor = Color.Green;
-                table[i, j].Text = $"{step}";
+                UpdateTile(i, j, step.ToString(), Color.Green);
 
                 step++;
                 Application.DoEvents();
@@ -212,14 +214,25 @@ namespace LabirintBackTracking
                 i = pair.Key;
                 j = pair.Value;
 
-                table[i, j].BackColor = Color.White;
-                table[i, j].Text = "";
+                UpdateTile(i, j, openTile, Color.White);
             }
 
             Application.DoEvents();
         }
 
-        private bool IsValid(int i, int j)
+        private void UpdateTile(int i, int j, string text, Color color)
+        {
+            if (table[i, j].InvokeRequired && backtrackingThread.IsAlive)
+            {
+                table[i, j].Invoke(new Action<int, int, string, Color>(UpdateTile), i, j, text, color);
+                return;
+            }
+
+            table[i, j].BackColor = color;
+            table[i, j].Text = text;
+        }
+
+        private bool IsValidTile(int i, int j)
         {
             if (i < 0 || i >= n || j < 0 || j >= n)
                 return false;
@@ -233,5 +246,19 @@ namespace LabirintBackTracking
             return true;
         }
 
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            if (!backtrackingThread.IsAlive)
+                return;
+
+            backtrackingThread.Abort();
+
+            labirint = new int[n, n];
+            foreach(var step in path)
+                UpdateTile(step.Key, step.Value, openTile, Color.White);
+
+            path = new List<KeyValuePair<int, int>>();
+            lockBacktracking = false;
+        }
     }
 }
