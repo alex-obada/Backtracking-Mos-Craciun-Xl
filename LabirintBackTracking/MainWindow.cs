@@ -29,8 +29,6 @@ namespace LabirintBackTracking
         private const string openTile = "";
 
         Thread backtrackingThread = null;
-        private bool lockBacktracking = false;
-
 
 
         public MainWindow()
@@ -51,8 +49,8 @@ namespace LabirintBackTracking
                 Dock = DockStyle.Fill,
             };
 
-            int width = tablePanel.Width;
-            int height = tablePanel.Height;
+            int width = panel.Width;
+            int height = panel.Height;
             int lenght = Math.Max(width, height) / n;
 
             for (int i = 0; i < n; i++)
@@ -83,7 +81,7 @@ namespace LabirintBackTracking
 
         private void HandleTileClicked(object sender, EventArgs e)
         {
-            if (lockBacktracking)
+            if (backtrackingThread != null && backtrackingThread.IsAlive)
                 return;
 
             Label label = (Label)sender;
@@ -161,15 +159,11 @@ namespace LabirintBackTracking
 
         private void btnStart_Click(object sender, EventArgs e)
         {
-            if (lockBacktracking)
+            if (backtrackingThread != null && backtrackingThread.IsAlive)
                 return;
             
-            lockBacktracking = true;
-
             backtrackingThread = new Thread(() => BackTracking());
             backtrackingThread.Start();
-
-            lockBacktracking = false;
         }
 
         private void BackTracking(int i = 0, int j = 0, int step = 1)
@@ -224,7 +218,7 @@ namespace LabirintBackTracking
         {
             if (table[i, j].InvokeRequired && backtrackingThread.IsAlive)
             {
-                table[i, j].Invoke(new Action<int, int, string, Color>(UpdateTile), i, j, text, color);
+                table[i, j]?.Invoke(new Action<int, int, string, Color>(UpdateTile), i, j, text, color);
                 return;
             }
 
@@ -248,7 +242,7 @@ namespace LabirintBackTracking
 
         private void btnStop_Click(object sender, EventArgs e)
         {
-            if (!backtrackingThread.IsAlive)
+            if (backtrackingThread == null || !backtrackingThread.IsAlive)
                 return;
 
             backtrackingThread.Abort();
@@ -258,7 +252,6 @@ namespace LabirintBackTracking
                 UpdateTile(step.Key, step.Value, openTile, Color.White);
 
             path = new List<KeyValuePair<int, int>>();
-            lockBacktracking = false;
         }
     }
 }
