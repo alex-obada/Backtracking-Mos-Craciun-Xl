@@ -51,7 +51,6 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel.BackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.panel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 701F));
             this.panel.Location = new System.Drawing.Point(-1, 0);
             this.panel.Name = "panel";
             this.panel.Size = new System.Drawing.Size(698, 452);
@@ -86,7 +85,7 @@
 
         #endregion
         private System.Windows.Forms.Button btnStart;
-        private System.Windows.Forms.TableLayoutPanel panel;
+        private System.Windows.Forms.Panel panel;
         private System.Windows.Forms.Button btnStop;
     }
 }
