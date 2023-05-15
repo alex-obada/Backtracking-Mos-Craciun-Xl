@@ -28,8 +28,18 @@ namespace LabirintBackTracking
         private const string blockedTile = "██";
         private const string openTile = "";
 
+        private readonly Color openTileColor = Color.White;
+        private readonly Color visitedTileColor = Color.Aqua;
+        private readonly Color pathTileColor = Color.Green;
+        private readonly Color blockedTileColor = Color.Red;
+
         Thread backtrackingThread = null;
 
+        /** to do
+         * 1.onFormClosed omoara threadu
+         * 2.UpdateTile refactorizata
+         * 
+         */
 
         public MainWindow()
         {
@@ -64,7 +74,7 @@ namespace LabirintBackTracking
                 {
                     table[i, j] = new Label()
                     {
-                        BackColor = obstacles[i, j] ? Color.Red : Color.White,
+                        BackColor = obstacles[i, j] ? blockedTileColor : openTileColor,
                         TextAlign = ContentAlignment.MiddleCenter,
                         Dock = DockStyle.Fill,
                         Text = obstacles[i, j] ? blockedTile : openTile,
@@ -90,12 +100,12 @@ namespace LabirintBackTracking
 
             if (obstacles[i, j])
             {
-                label.BackColor = Color.White;
+                label.BackColor = openTileColor;
                 label.Text = openTile;
             }
             else
             {
-                label.BackColor = Color.Red;
+                label.BackColor = blockedTileColor;
                 label.Text = blockedTile;
             }
 
@@ -173,7 +183,11 @@ namespace LabirintBackTracking
 
             labirint[i, j] = step;
             path.Add(new KeyValuePair<int, int>(i, j));
-            
+
+            UpdateTile(i, j, step.ToString(), visitedTileColor);
+            Application.DoEvents();
+            Thread.Sleep(50);
+
             //MessageBox.Show($"Celula ({i + 1}, {j + 1}), pasul {step}");
 
             // stop condition
@@ -183,6 +197,10 @@ namespace LabirintBackTracking
                 // main loop
                 for (int d = 0; d < 4; ++d)
                     BackTracking(i + di[d], j + dj[d], step + 1);
+
+            UpdateTile(i, j, openTile, openTileColor);
+            Application.DoEvents();
+            Thread.Sleep(50);
 
             path.RemoveAt(path.Count - 1);
             labirint[i, j] = 0;
@@ -195,30 +213,35 @@ namespace LabirintBackTracking
             {
                 i = pair.Key;
                 j = pair.Value;
-                UpdateTile(i, j, step.ToString(), Color.Green);
-
-                step++;
+                UpdateTile(i, j, step.ToString(), pathTileColor);
                 Application.DoEvents();
                 Thread.Sleep(100);
+
+                step++;
             }
 
             Thread.Sleep(1000);
-            foreach (var pair in path)
+            for (int p = path.Count - 1; p >= 0; --p)
             {
-                i = pair.Key;
-                j = pair.Value;
+                i = path[p].Key;
+                j = path[p].Value;
 
-                UpdateTile(i, j, openTile, Color.White);
+                UpdateTile(i, j, $"{p + 1}", visitedTileColor);
+                Application.DoEvents();
+                Thread.Sleep(50);
             }
 
-            Application.DoEvents();
         }
 
         private void UpdateTile(int i, int j, string text, Color color)
         {
             if (table[i, j].InvokeRequired && backtrackingThread.IsAlive)
             {
-                table[i, j]?.Invoke(new Action<int, int, string, Color>(UpdateTile), i, j, text, color);
+                try
+                { 
+                    table[i, j]?.Invoke(new Action<int, int, string, Color>(UpdateTile), i, j, text, color);
+                }
+                catch { }
                 return;
             }
 
@@ -249,7 +272,7 @@ namespace LabirintBackTracking
 
             labirint = new int[n, n];
             foreach(var step in path)
-                UpdateTile(step.Key, step.Value, openTile, Color.White);
+                UpdateTile(step.Key, step.Value, openTile, openTileColor);
 
             path = new List<KeyValuePair<int, int>>();
         }
