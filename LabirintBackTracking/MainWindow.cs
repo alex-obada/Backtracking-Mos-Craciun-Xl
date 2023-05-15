@@ -35,11 +35,6 @@ namespace LabirintBackTracking
 
         Thread backtrackingThread = null;
 
-        /** to do
-         * 1.onFormClosed omoara threadu
-         * 2.UpdateTile refactorizata
-         * 
-         */
 
         public MainWindow()
         {
@@ -183,10 +178,7 @@ namespace LabirintBackTracking
 
             labirint[i, j] = step;
             path.Add(new KeyValuePair<int, int>(i, j));
-
-            UpdateTile(i, j, step.ToString(), visitedTileColor);
-            Application.DoEvents();
-            Thread.Sleep(50);
+            UpdateTile(i, j, step.ToString(), visitedTileColor, 50);
 
             //MessageBox.Show($"Celula ({i + 1}, {j + 1}), pasul {step}");
 
@@ -198,10 +190,7 @@ namespace LabirintBackTracking
                 for (int d = 0; d < 4; ++d)
                     BackTracking(i + di[d], j + dj[d], step + 1);
 
-            UpdateTile(i, j, openTile, openTileColor);
-            Application.DoEvents();
-            Thread.Sleep(50);
-
+            UpdateTile(i, j, openTile, openTileColor, 50);
             path.RemoveAt(path.Count - 1);
             labirint[i, j] = 0;
         }
@@ -213,33 +202,30 @@ namespace LabirintBackTracking
             {
                 i = pair.Key;
                 j = pair.Value;
-                UpdateTile(i, j, step.ToString(), pathTileColor);
-                Application.DoEvents();
-                Thread.Sleep(100);
-
+                UpdateTile(i, j, step.ToString(), pathTileColor, 100);
                 step++;
             }
 
-            Thread.Sleep(1000);
+            Thread.Sleep(500);
             for (int p = path.Count - 1; p >= 0; --p)
             {
                 i = path[p].Key;
                 j = path[p].Value;
 
-                UpdateTile(i, j, $"{p + 1}", visitedTileColor);
-                Application.DoEvents();
-                Thread.Sleep(50);
+                UpdateTile(i, j, $"{p + 1}", visitedTileColor, 50);
             }
 
         }
 
-        private void UpdateTile(int i, int j, string text, Color color)
+        private void UpdateTile(int i, int j, string text, Color color, int sleepInterval = 0)
         {
             if (table[i, j].InvokeRequired && backtrackingThread.IsAlive)
             {
                 try
                 { 
-                    table[i, j]?.Invoke(new Action<int, int, string, Color>(UpdateTile), i, j, text, color);
+                    table[i, j]?.Invoke(
+                        new Action<int, int, string, Color, int>(UpdateTile), 
+                        i, j, text, color, sleepInterval);
                 }
                 catch { }
                 return;
@@ -247,6 +233,8 @@ namespace LabirintBackTracking
 
             table[i, j].BackColor = color;
             table[i, j].Text = text;
+            Application.DoEvents();
+            Thread.Sleep(sleepInterval);
         }
 
         private bool IsValidTile(int i, int j)
@@ -276,5 +264,14 @@ namespace LabirintBackTracking
 
             path = new List<KeyValuePair<int, int>>();
         }
+
+        private void MainWindow_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (backtrackingThread == null || !backtrackingThread.IsAlive)
+                return;
+
+            backtrackingThread.Abort();
+        }
+
     }
 }
