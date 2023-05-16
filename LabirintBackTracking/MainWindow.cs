@@ -178,7 +178,7 @@ namespace LabirintBackTracking
 
             labirint[i, j] = step;
             path.Add(new KeyValuePair<int, int>(i, j));
-            UpdateTile(i, j, step.ToString(), visitedTileColor, 50);
+            UpdateTile(i, j, step.ToString(), visitedTileColor, 300);
 
             //MessageBox.Show($"Celula ({i + 1}, {j + 1}), pasul {step}");
 
@@ -190,7 +190,7 @@ namespace LabirintBackTracking
                 for (int d = 0; d < 4; ++d)
                     BackTracking(i + di[d], j + dj[d], step + 1);
 
-            UpdateTile(i, j, openTile, openTileColor, 50);
+            UpdateTile(i, j, openTile, openTileColor, 300);
             path.RemoveAt(path.Count - 1);
             labirint[i, j] = 0;
         }
@@ -202,17 +202,17 @@ namespace LabirintBackTracking
             {
                 i = pair.Key;
                 j = pair.Value;
-                UpdateTile(i, j, step.ToString(), pathTileColor, 100);
+                UpdateTile(i, j, step.ToString(), pathTileColor);
                 step++;
             }
 
-            Thread.Sleep(500);
+            Thread.Sleep(1500);
             for (int p = path.Count - 1; p >= 0; --p)
             {
                 i = path[p].Key;
                 j = path[p].Value;
 
-                UpdateTile(i, j, $"{p + 1}", visitedTileColor, 50);
+                UpdateTile(i, j, $"{p + 1}", visitedTileColor);
             }
 
         }
@@ -222,7 +222,8 @@ namespace LabirintBackTracking
             if (table[i, j].InvokeRequired && backtrackingThread.IsAlive)
             {
                 try
-                { 
+                {
+                    Thread.Sleep(sleepInterval);
                     table[i, j]?.Invoke(
                         new Action<int, int, string, Color, int>(UpdateTile), 
                         i, j, text, color, sleepInterval);
@@ -234,7 +235,6 @@ namespace LabirintBackTracking
             table[i, j].BackColor = color;
             table[i, j].Text = text;
             Application.DoEvents();
-            Thread.Sleep(sleepInterval);
         }
 
         private bool IsValidTile(int i, int j)
