@@ -219,22 +219,18 @@ namespace LabirintBackTracking
 
         private void UpdateTile(int i, int j, string text, Color color, int sleepInterval = 0)
         {
-            if (table[i, j].InvokeRequired && backtrackingThread.IsAlive)
+            if (table[i, j].InvokeRequired)
             {
-                try
-                {
-                    Thread.Sleep(sleepInterval);
-                    table[i, j]?.Invoke(
-                        new Action<int, int, string, Color, int>(UpdateTile), 
-                        i, j, text, color, sleepInterval);
-                }
-                catch { }
+                Thread.Sleep(sleepInterval);
+                table[i, j]?.Invoke(
+                    new Action<int, int, string, Color, int>(UpdateTile), 
+                    i, j, text, color, sleepInterval);
                 return;
             }
 
             table[i, j].BackColor = color;
             table[i, j].Text = text;
-            Application.DoEvents();
+            table[i, j].Update();
         }
 
         private bool IsValidTile(int i, int j)
